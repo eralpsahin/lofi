@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen, shell, ipcRenderer } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, shell, ipcRenderer, Menu, Tray } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import '../../build/release/black-magic.node';
@@ -21,6 +21,7 @@ if (MACOS) {
 
 let mainWindow: Electron.BrowserWindow;
 let mousePoller: NodeJS.Timeout;
+let tray: Electron.Tray;
 
 register('A', () => {
   mainWindow.webContents.send('prev-visualization');
@@ -130,11 +131,45 @@ function createWindow() {
   });
 }
 
+function createTray() {
+  // Create the tray
+  tray = new Tray(path.join(__dirname, '../', 'trayicon.png'));
+
+  // Build the tray menu
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Quit',
+      accelerator: 'Command+Q',
+      click: function() {
+        mainWindow.destroy();
+        app.quit();
+      }
+    }
+  ]);
+  tray.on('right-click', () => tray.popUpContextMenu(contextMenu));
+
+  // Add Hide - Show functionality on tray icon click
+  tray.on('click', () => {
+    if (mainWindow === null) {
+      createWindow();
+    } else {
+      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+    }
+  });
+  
+  // Remove the app from the dock
+  app.dock.hide();
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   createWindow();
+  // Use the tray only on macOS
+  if (MACOS) {
+    createTray();
+  }
 });
 
 // Quit when all windows are closed.

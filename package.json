@@ -25,7 +25,8 @@
     ],    
     "files": [
       "./pack/**/*",
-      "./icon.*"
+      "./icon.*",
+      "./trayicon.png"
     ],
     "directories": {
       "output": "dist"
